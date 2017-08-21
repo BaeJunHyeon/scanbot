@@ -15,12 +15,27 @@ void servoInit()
 	// ICRn, OCRnx 2 = 1us
 	TCCR3A = (1<<COM3A1)|(0<<COM3A0)|(1<<COM3B1)|(0<<COM3B0)|(0<<COM3C1)|(0<<COM3C0)|(1<<WGM31)|(0<<WGM30);
 	TCCR3B = (0<<ICNC3)|(0<<ICES3)|(1<<WGM33)|(1<<WGM32)|(0<<CS32)|(1<<CS31)|(0<<CS30);
-	ICR3 = 39999;
+	ICR3 = 39999; // Tilt Motor Period 20ms
 	OCR3B = 0;
 	
 	DDRA = 0x80;
 	DDRE|=(1<<PINE3)|(1<<PINE4)|(1<<PINE5);
 	DDRB = 0xE0;
+}
+
+// 배준현
+void tiltInit(int Period)
+{
+		TCCR3A = (1<<COM3A1)|(0<<COM3A0)|(1<<COM3B1)|(0<<COM3B0)|(0<<COM3C1)|(0<<COM3C0)|(1<<WGM31)|(0<<WGM30);
+		TCCR3B = (0<<ICNC3)|(0<<ICES3)|(1<<WGM33)|(1<<WGM32)|(0<<CS32)|(1<<CS31)|(0<<CS30);
+		ICR3 = Period; // Tilt Motor Period 39999 = 20ms
+		OCR3B = 0;
+		
+		DDRA = 0x80;
+		DDRE|=(1<<PINE3)|(1<<PINE4)|(1<<PINE5);
+		DDRB = 0xE0;
+
+
 }
 
 void servoMoveTo(unsigned char motorNum, unsigned int deg)

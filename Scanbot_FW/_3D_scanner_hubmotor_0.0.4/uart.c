@@ -27,6 +27,12 @@ void TX0_string(unsigned char *str)
 	}
 }
 
+void TX0_int(unsigned int input)
+{
+	while(!(UCSR0A&(1<<UDRE0)));
+	UDR0=input;
+}
+
 unsigned char RX1_data(void)
 {
 	//while(!(UCSR0A&(1<<RXC1)));

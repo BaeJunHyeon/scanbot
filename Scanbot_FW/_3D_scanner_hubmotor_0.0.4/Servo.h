@@ -13,5 +13,5 @@ void servoInit();
 void servoMoveTo(unsigned char motorNum, unsigned int deg);
 void turnWheel(int m1, int m2, int m3);
 void hubMove(char dir,int speed);
-
+void tiltInit(int Period); // 배준현
 #endif /* SERVO_H_ */
