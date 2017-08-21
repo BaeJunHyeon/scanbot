@@ -18,5 +18,5 @@ unsigned char RX1_data(void);
 void TX1_data(unsigned char data);
 void USART_Init(unsigned int baud);
 void TX0_string(unsigned char *str);
-
+void TX0_int(unsigned int input);
 #endif /* UART_H_ */
