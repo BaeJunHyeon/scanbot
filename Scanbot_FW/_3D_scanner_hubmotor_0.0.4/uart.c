@@ -27,10 +27,18 @@ void TX0_string(unsigned char *str)
 	}
 }
 
+//Add by 배준현
 void TX0_int(unsigned int input)
 {
-	while(!(UCSR0A&(1<<UDRE0)));
-	UDR0=input;
+	char output[10];
+	itoa(input, output, 10);
+	int i=0;
+
+	while(output[i] != '\0')
+	{
+		TX0_data(output[i]);
+		i++;
+	}	
 }
 
 unsigned char RX1_data(void)

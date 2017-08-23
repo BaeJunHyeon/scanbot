@@ -1,5 +1,8 @@
 #define F_CPU 16000000UL
 
+#define headspeed
+//#defind legacy
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -48,7 +51,7 @@ int main(void){
 	cli();	
 	stepperInit(&headMotor,2,2);
 	//	sensorInit();
-		servoInit();
+	servoInit();
 	servoMoveTo(1,servo1deg);
 	servoMoveTo(2,servo2deg);
 	servoMoveTo(3,servo3deg);
@@ -59,7 +62,7 @@ int main(void){
 	sonicFlag=0;
 	dist=0;
 	unsigned int setDist=80;
-	unsigned int headRPM=5;
+	unsigned int headRPM=30;
 	int hubSpeed=0;
 	
 	unsigned int headHeight=2000;
@@ -94,9 +97,89 @@ int main(void){
 
 		*/
 		switch(data){
+		#ifdef headspeed
+			case 'c':
+			stepSpeed(&headMotor,headRPM);
+			if(headMotor.steps>0){
+				timer2Token=1;
+				stepperMove(&headMotor,-1);
+			}
+			else if(headMotor.steps<=0){
+				timer2Token=0;
+				TIMSK &=(0<<OCIE2);
+				PORTE |= (1<<PORTE5);
+				data=0;
+			}
+			break;
+			case 'q':	//헤드 이동속도 --
+			stepSpeed(&headMotor,headRPM--);
+			TX0_string("***");
+			TX0_int(headRPM);
+			data= data1;
+			break;
+
+			case 'w':	//헤드 이동속도 ++
+			stepSpeed(&headMotor,headRPM++);
+			TX0_int(headRPM);
+			TX0_string("***");
+			TX0_int(headRPM);
+			data= data1;
+			break;
+
+			
+			case '1':	//헤드 이동 및 스캔 준비
+			headHeight = 500;
+			servoMoveTo(4,70);
+			if(headMotor.steps<headHeight && headMotor.steps>=0) {
+				stepperMove(&headMotor,1);
+			}
+			else if(headMotor.steps==headHeight) {
+				if(timer2Token==1) {
+					timer2Token=0;
+					data=0;
+					isReady=1;
+				}
+				if(isReady==1) {
+					//TX0_string("#1");
+					isReady=0;
+				}
+			}
+			break;
+
+			case '2':	//헤드 이동 및 스캔 준비
+			headHeight = 200;
+			if(headMotor.steps<headHeight && headMotor.steps>=0){
+				stepperMove(&headMotor,-1);
+			}
+			else if(headMotor.steps==headHeight){
+				if(timer2Token==1){
+					timer2Token=0;
+					data=0;
+					isReady=1;
+				}
+				if(isReady==1){
+					//TX0_string("#3");
+					delta = 70;
+					isReady=0;
+				}
+			}
+			else if(headMotor.steps>headHeight) {
+				stepperMove(&headMotor,-1);
+				deltaCNT++;
+				if(deltaCNT%7200 == 0 && delta < 71){
+					delta++;
+					servoMoveTo(4,delta);
+				}
+			}
+			break;
+
+		#endif
+
+
+		#ifdef legacy			
 			case 'q':
-				headHeight = 2100;
-				// 160
+			headHeight = 2100;
+			// 160
 			break;
 
 			case 'w':
@@ -107,10 +190,7 @@ int main(void){
 			case 'e':
 				headHeight = 2400;
 				//180
-
 			break;
-
-
 
 			case '1':	//헤드 이동 및 스캔 준비
 			headHeight = 1650;
@@ -139,8 +219,7 @@ int main(void){
 				if(deltaCNT%10000 == 0 && delta > 54){
 					delta--;
 					servoMoveTo(4,delta);
-				}
-				
+				}				
 			}
 			else if(headMotor.steps==headHeight){
 				deltaCNT=0;
@@ -273,7 +352,7 @@ int main(void){
 					data=0;
 				}
 			break;
-
+			#endif
 			//case 'a':		//스캐닝 동작
 			//stepSpeed(&headMotor,headRPM);
 			//TCCR0 = (1<<WGM01)|(0<<WGM00)|(0<<COM01)|(0<<COM00)|(1<<CS02)|(1<<CS01)|(1<<CS00);
