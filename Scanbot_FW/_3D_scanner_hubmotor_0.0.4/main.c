@@ -1,7 +1,9 @@
 #define F_CPU 16000000UL
 
-#define headspeed
-//#defind legacy
+//#define findHeight
+//#define headspeed
+//#define test
+#define variableTest // 2100 - 1650,2100,1250,500,0 / 2250 - 1750,2250,1300,550,0 / 2400 - 1850,2400,1350,600,0
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -62,6 +64,8 @@ int main(void){
 	sonicFlag=0;
 	dist=0;
 	unsigned int setDist=80;
+	//18 ~ 30 ~ 40 사이 값으로.
+	//17부터 모터 최대값 잡힘.(고주파 잡음만)
 	unsigned int headRPM=30;
 	int hubSpeed=0;
 	
@@ -75,6 +79,12 @@ int main(void){
 	unsigned int delta = 70;
 	unsigned int deltaFlag = 1;
 	unsigned int deltaCNT = 0;
+
+	unsigned int H1 = 1650;
+	unsigned int H2 = 2100;
+	unsigned int H3 = 1250;
+	unsigned int H4 = 500;
+
 
 	stepSpeed(&headMotor,headRPM);
 	
@@ -97,6 +107,203 @@ int main(void){
 
 		*/
 		switch(data){
+		#ifdef variableTest
+			case 'q':
+			H1 = 1650;
+			H2 = 2100;
+			H3 = 1250;
+			H4 = 500;
+			break;
+
+			case 'w':
+			H1 = 1750;
+			H2 = 2250;
+			H3 = 1300;
+			H4 = 550;
+			break;
+
+			case 'e':
+			H1 = 1850;
+			H2 = 2400;
+			H3 = 1350;
+			H4 = 600;
+			break;
+
+			case '1':	//헤드 이동 및 스캔 준비
+			headHeight = H1;
+			servoMoveTo(4,70);
+			if(headMotor.steps<headHeight && headMotor.steps>=0) {
+				stepperMove(&headMotor,1);
+			}
+			else if(headMotor.steps==headHeight) {
+				if(timer2Token==1) {
+					timer2Token=0;
+					data=0;
+					isReady=1;
+				}
+				if(isReady==1) {
+					TX0_string("#1");
+					isReady=0;
+				}
+			}
+			break;
+
+			case '2':	//헤드 이동 및 스캔 준비
+			headHeight = H2;
+			if(headMotor.steps<headHeight && headMotor.steps>=0){
+				stepperMove(&headMotor,1);
+				//TX0_string("1");
+				deltaCNT++;
+				if(deltaCNT%10000 == 0 && delta > 54){
+					delta--;
+					servoMoveTo(4,delta);
+				}
+			}
+			else if(headMotor.steps==headHeight){
+				deltaCNT=0;
+				if(timer2Token==1){
+					timer2Token=0;
+					data=0;
+					isReady=1;
+				}
+				if(isReady==1) {
+					deltaCNT=0;
+					TX0_string("#2");
+					isReady=0;
+				}
+			}
+			else if(headMotor.steps>headHeight)
+			stepperMove(&headMotor,-1);
+			break;
+
+			case '3':	//헤드 이동 및 스캔 준비
+			headHeight = H3;
+			if(headMotor.steps<headHeight && headMotor.steps>=0){
+				stepperMove(&headMotor,-1);
+			}
+			else if(headMotor.steps==headHeight){
+				if(timer2Token==1){
+					timer2Token=0;
+					data=0;
+					isReady=1;
+				}
+				if(isReady==1){
+					TX0_string("#3");
+					delta = 70;
+					isReady=0;
+				}
+			}
+			else if(headMotor.steps>headHeight) {
+				stepperMove(&headMotor,-1);
+				deltaCNT++;
+				if(deltaCNT%7200 == 0 && delta < 71){
+					delta++;
+					servoMoveTo(4,delta);
+				}
+			}
+			break;
+
+			case '4':	//헤드 이동 및 스캔 준비
+			headHeight = H4;
+			servoMoveTo(4,70); // init center
+			if(headMotor.steps<headHeight && headMotor.steps>=0)
+			stepperMove(&headMotor,-1);
+			else if(headMotor.steps==headHeight){
+				if(timer2Token==1){
+					timer2Token=0;
+					data=0;
+					isReady=1;
+				}
+				if(isReady==1){
+					TX0_string("#4");
+					isReady=0;
+				}
+			}
+			else if(headMotor.steps>headHeight)
+			stepperMove(&headMotor,-1);
+			break;
+
+			case '5':	//헤드 이동 및 스캔 준비
+			headHeight = 0;
+			if(headMotor.steps<headHeight && headMotor.steps>=0) {
+				stepperMove(&headMotor,-1);
+			}
+			
+			else if(headMotor.steps==headHeight) {
+				if(timer2Token==1){
+					timer2Token=0;
+					data=0;
+					isReady=1;
+				}
+				if(isReady==1){
+					TX0_string("#5");
+					isReady=0;
+				}
+			}
+			else if(headMotor.steps>headHeight)
+			stepperMove(&headMotor,-1);
+			break;
+			
+			case '7':
+			delta = 50;
+			servoMoveTo(4,delta);
+			break;
+
+			case '8':
+			if(49 <= delta && delta <=71){
+				servoMoveTo(4,delta);
+				_delay_ms(120);
+				delta--;
+			}
+			break;
+
+			case '9':
+			if(delta <=70){
+				servoMoveTo(4,delta);
+				_delay_ms(120);
+				delta++;
+			}
+			break;
+
+			case 'c':
+			stepSpeed(&headMotor,headRPM);
+			if(headMotor.steps>0){
+				timer2Token=1;
+				stepperMove(&headMotor,-1);
+			}
+			else if(headMotor.steps<=0){
+				timer2Token=0;
+				TIMSK &=(0<<OCIE2);
+				PORTE |= (1<<PORTE5);
+				data=0;
+			}
+			break;
+
+		#endif
+
+		#ifdef findHeight
+
+			case '1':	//헤드 이동 및 스캔 준비
+			headHeight = 800;
+			//servoMoveTo(4,70);
+			if(headMotor.steps<headHeight && headMotor.steps>=0) {
+				stepperMove(&headMotor,1);
+			}
+			else if(headMotor.steps==headHeight) {
+				if(timer2Token==1) {
+					timer2Token=0;
+					data=0;
+					isReady=1;
+				}
+				if(isReady==1) {
+					isReady=0;
+				}
+			}
+			break;
+
+						
+		#endif
+
 		#ifdef headspeed
 			case 'c':
 			stepSpeed(&headMotor,headRPM);
@@ -128,7 +335,7 @@ int main(void){
 
 			
 			case '1':	//헤드 이동 및 스캔 준비
-			headHeight = 500;
+			headHeight = 800;
 			servoMoveTo(4,70);
 			if(headMotor.steps<headHeight && headMotor.steps>=0) {
 				stepperMove(&headMotor,1);
@@ -140,6 +347,7 @@ int main(void){
 					isReady=1;
 				}
 				if(isReady==1) {
+					
 					//TX0_string("#1");
 					isReady=0;
 				}
@@ -176,20 +384,20 @@ int main(void){
 		#endif
 
 
-		#ifdef legacy			
+		#ifdef test
 			case 'q':
 			headHeight = 2100;
 			// 160
 			break;
 
 			case 'w':
-				headHeight = 2250;
-				//170
+			headHeight = 2250;
+			//170
 			break;
 
 			case 'e':
-				headHeight = 2400;
-				//180
+			headHeight = 2400;
+			//180
 			break;
 
 			case '1':	//헤드 이동 및 스캔 준비
@@ -219,7 +427,7 @@ int main(void){
 				if(deltaCNT%10000 == 0 && delta > 54){
 					delta--;
 					servoMoveTo(4,delta);
-				}				
+				}
 			}
 			else if(headMotor.steps==headHeight){
 				deltaCNT=0;
@@ -286,71 +494,71 @@ int main(void){
 			break;
 
 			case '5':	//헤드 이동 및 스캔 준비
-				headHeight = 0;
-				if(headMotor.steps<headHeight && headMotor.steps>=0) {
-					stepperMove(&headMotor,-1);
-				}
-				
-				else if(headMotor.steps==headHeight) {
-					if(timer2Token==1){
-						timer2Token=0;						
-						data=0;
-						isReady=1;						
-					}			
-					if(isReady==1){
-						TX0_string("#5");
-						isReady=0;
-					}
-				}
-				else if(headMotor.steps>headHeight)
+			headHeight = 0;
+			if(headMotor.steps<headHeight && headMotor.steps>=0) {
 				stepperMove(&headMotor,-1);
+			}
+			
+			else if(headMotor.steps==headHeight) {
+				if(timer2Token==1){
+					timer2Token=0;
+					data=0;
+					isReady=1;
+				}
+				if(isReady==1){
+					TX0_string("#5");
+					isReady=0;
+				}
+			}
+			else if(headMotor.steps>headHeight)
+			stepperMove(&headMotor,-1);
 			break;
-		
+			
 			case '7':
-				delta = 50;
-				servoMoveTo(4,delta);
-				break;
+			delta = 50;
+			servoMoveTo(4,delta);
+			break;
 
 			case '8':
-				if(49 <= delta && delta <=71){
-					servoMoveTo(4,delta);
-					_delay_ms(120);
-					delta--;
-				}
+			if(49 <= delta && delta <=71){
+				servoMoveTo(4,delta);
+				_delay_ms(120);
+				delta--;
+			}
 			break;
 
 			case '9':
-				if(delta <=70){
-					servoMoveTo(4,delta);
-					_delay_ms(120);
-					delta++;
-				}				
+			if(delta <=70){
+				servoMoveTo(4,delta);
+				_delay_ms(120);
+				delta++;
+			}
 			break;
-		
+			
 			case '-':	//헤드 이동속도 --
-				stepSpeed(&headMotor,headRPM--);
-				TX0_data(headRPM);
-				data= data1;
+			stepSpeed(&headMotor,headRPM--);
+			TX0_data(headRPM);
+			data= data1;
 			break;
 
 			case '+':	//헤드 이동속도 ++
-				stepSpeed(&headMotor,headRPM++);
-				TX0_data(headRPM);
-				data= data1;
+			stepSpeed(&headMotor,headRPM++);
+			TX0_data(headRPM);
+			data= data1;
 			break;
 
 			case 'c':
-				stepSpeed(&headMotor,headRPM);
-				if(headMotor.steps>0){
-					timer2Token=1;
-					stepperMove(&headMotor,-1);
-				}
-				else if(headMotor.steps<=0){
-					timer2Token=0;
-					TIMSK &=(0<<OCIE2);
-					PORTE |= (1<<PORTE5);
-					data=0;
-				}
+			stepSpeed(&headMotor,headRPM);
+			if(headMotor.steps>0){
+				timer2Token=1;
+				stepperMove(&headMotor,-1);
+			}
+			else if(headMotor.steps<=0){
+				timer2Token=0;
+				TIMSK &=(0<<OCIE2);
+				PORTE |= (1<<PORTE5);
+				data=0;
+			}
 			break;
 			#endif
 			//case 'a':		//스캐닝 동작
