@@ -84,8 +84,7 @@ int main(void){
 	unsigned int H2 = 2100;
 	unsigned int H3 = 1250;
 	unsigned int H4 = 500;
-
-
+	
 	stepSpeed(&headMotor,headRPM);
 	
 	data='0';
@@ -109,24 +108,15 @@ int main(void){
 		switch(data){
 		#ifdef variableTest
 			case 'q':
-			H1 = 1650;
-			H2 = 2100;
-			H3 = 1250;
-			H4 = 500;
+			H1 = 1650; H2 = 2100; H3 = 1250; H4 = 500;
 			break;
 
 			case 'w':
-			H1 = 1750;
-			H2 = 2250;
-			H3 = 1300;
-			H4 = 550;
+			H1 = 1750; H2 = 2250; H3 = 1300; H4 = 550;
 			break;
 
 			case 'e':
-			H1 = 1850;
-			H2 = 2400;
-			H3 = 1350;
-			H4 = 600;
+			H1 = 1850; H2 = 2400; H3 = 1350; H4 = 600;
 			break;
 
 			case '1':	//헤드 이동 및 스캔 준비
@@ -299,9 +289,7 @@ int main(void){
 					isReady=0;
 				}
 			}
-			break;
-
-						
+			break;						
 		#endif
 
 		#ifdef headspeed

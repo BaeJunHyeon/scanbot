@@ -458,11 +458,11 @@ int main(void){
  30a:	10 92 1b 01 	sts	0x011B, r1	; 0x80011b <sonicFlag>
 	dist=0;
  30e:	10 92 1d 01 	sts	0x011D, r1	; 0x80011d <dist+0x1>
+	unsigned int H1 = 1650;
 	unsigned int H2 = 2100;
 	unsigned int H3 = 1250;
 	unsigned int H4 = 500;
-
-
+	
 	stepSpeed(&headMotor,headRPM);
  312:	10 92 1c 01 	sts	0x011C, r1	; 0x80011c <dist>
  316:	6e e1       	ldi	r22, 0x1E	; 30
